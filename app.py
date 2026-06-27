@@ -1,5 +1,5 @@
 # app.py — ScaffoldRisk v1.0 Flask Backend
-
+import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from fis_engine import compute_risk
