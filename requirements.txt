@@ -1,0 +1,7 @@
+flask
+flask-cors
+scikit-fuzzy
+numpy
+scipy
+packaging
+networkx
