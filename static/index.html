@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScaffoldRisk v1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-gray-900 border-b border-gray-700 px-6 py-4">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-white">
+                    🏗️ ScaffoldRisk <span class="text-yellow-400">v1.0</span>
+                </h1>
+                <p class="text-gray-400 text-sm mt-0.5">
+                    Intelligent Scaffolding Risk Assessment System — Nigeria
+                </p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500">Powered by</span>
+                <p class="text-sm font-semibold text-yellow-400">
+                    Mamdani Fuzzy Logic FIS
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- LEFT: INPUT PANEL -->
+            <div class="space-y-6">
+                <h2 class="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2">
+                    Site Input Parameters
+                </h2>
+
+                <!-- Wind Speed -->
+                <div class="slider-card" id="card-wind">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-medium text-gray-300">
+                            💨 Wind Speed
+                        </label>
+                        <span class="text-sm font-bold text-yellow-400">
+                            <span id="val-wind">30</span> km/h
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="60" step="1" value="30"
+                           id="slider-wind" class="slider w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0 km/h (Calm)</span>
+                        <span>60 km/h (Near Gale)</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 tooltip" id="tip-wind">
+                        Beaufort Scale: 30 km/h = Force 4 (Moderate Breeze)
+                    </p>
+                </div>
+
+                <!-- Scaffold Height -->
+                <div class="slider-card" id="card-height">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-medium text-gray-300">
+                            📏 Scaffold Height
+                        </label>
+                        <span class="text-sm font-bold text-yellow-400">
+                            <span id="val-height">20</span> m
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="60" step="1" value="20"
+                           id="slider-height" class="slider w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0 m (Ground)</span>
+                        <span>60 m (Maximum)</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 tooltip" id="tip-height">
+                        20m: Mid-rise — moderate slenderness risk
+                    </p>
+                </div>
+
+                <!-- Foundation Stability -->
+                <div class="slider-card" id="card-found">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-medium text-gray-300">
+                            🪨 Foundation Stability
+                        </label>
+                        <span class="text-sm font-bold text-yellow-400">
+                            <span id="val-found">5.0</span> / 10
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.1" value="5"
+                           id="slider-found" class="slider w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0 (Waterlogged/No base plate)</span>
+                        <span>10 (Engineered foundation)</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 tooltip" id="tip-found">
+                        5.0: Fair — moderate soil, partial sole boards present
+                    </p>
+                </div>
+
+                <!-- Service Load -->
+                <div class="slider-card" id="card-load">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-medium text-gray-300">
+                            ⚖️ Service Load
+                        </label>
+                        <span class="text-sm font-bold text-yellow-400">
+                            <span id="val-load">3.0</span> kN/m²
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="7" step="0.1" value="3"
+                           id="slider-load" class="slider w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0 (Unloaded)</span>
+                        <span>7.0 kN/m² (Overloaded)</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 tooltip" id="tip-load">
+                        3.0 kN/m²: BS EN 12811-1 Class 4 — Masonry operations
+                    </p>
+                </div>
+
+                <!-- Assembly Integrity -->
+                <div class="slider-card" id="card-assemb">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-medium text-gray-300">
+                            🔩 Assembly Integrity
+                        </label>
+                        <span class="text-sm font-bold text-yellow-400">
+                            <span id="val-assemb">5.0</span> / 10
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.1" value="5"
+                           id="slider-assemb" class="slider w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0 (Severe corrosion/Missing bracing)</span>
+                        <span>10 (Full compliance)</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 tooltip" id="tip-assemb">
+                        5.0: Fair — some corrosion, partial bracing present
+                    </p>
+                </div>
+
+                <!-- Assess Button -->
+                <button id="btn-assess"
+                    class="w-full py-3 px-6 bg-yellow-400 hover:bg-yellow-300
+                           text-gray-950 font-bold text-lg rounded-xl
+                           transition-all duration-200 shadow-lg
+                           hover:shadow-yellow-400/25 active:scale-95">
+                    ⚡ Run Risk Assessment
+                </button>
+            </div>
+
+            <!-- RIGHT: OUTPUT PANEL -->
+            <div class="space-y-6">
+                <h2 class="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2">
+                    Risk Assessment Output
+                </h2>
+
+                <!-- Gauge -->
+                <div class="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+                    <p class="text-center text-sm text-gray-400 mb-4">
+                        Master Risk Index
+                    </p>
+                    <div class="flex justify-center">
+                        <div class="relative">
+                            <svg id="gauge-svg" width="260" height="150"
+                                 viewBox="0 0 260 150">
+                                <!-- Background arc segments -->
+                                <path d="M 20 130 A 110 110 0 0 1 86 23"
+                                      fill="none" stroke="#166534"
+                                      stroke-width="18" stroke-linecap="round"/>
+                                <path d="M 86 23 A 110 110 0 0 1 174 23"
+                                      fill="none" stroke="#854d0e"
+                                      stroke-width="18" stroke-linecap="round"/>
+                                <path d="M 174 23 A 110 110 0 0 1 240 130"
+                                      fill="none" stroke="#991b1b"
+                                      stroke-width="18" stroke-linecap="round"/>
+                                <!-- Needle -->
+                                <line id="gauge-needle"
+                                      x1="130" y1="130"
+                                      x2="130" y2="30"
+                                      stroke="white" stroke-width="3"
+                                      stroke-linecap="round"
+                                      transform="rotate(-90, 130, 130)"/>
+                                <!-- Center dot -->
+                                <circle cx="130" cy="130" r="8"
+                                        fill="white"/>
+                                <!-- Score text -->
+                                <text id="gauge-score"
+                                      x="130" y="115"
+                                      text-anchor="middle"
+                                      font-size="28"
+                                      font-weight="bold"
+                                      fill="white">—</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Risk Category Badge -->
+                    <div class="text-center mt-2">
+                        <span id="risk-badge"
+                              class="inline-block px-6 py-2 rounded-full
+                                     text-sm font-bold bg-gray-700 text-gray-400">
+                            Awaiting Assessment
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Directive Panel -->
+                <div id="directive-panel"
+                     class="bg-gray-900 rounded-2xl p-5 border border-gray-700">
+                    <p class="text-sm font-semibold text-gray-400 mb-2">
+                        📋 Site Directive
+                    </p>
+                    <p id="directive-text" class="text-gray-500 text-sm leading-relaxed">
+                        Run an assessment to receive a site safety directive.
+                    </p>
+                </div>
+
+                <!-- Input Summary -->
+                <div class="bg-gray-900 rounded-2xl p-5 border border-gray-700">
+                    <p class="text-sm font-semibold text-gray-400 mb-3">
+                        📊 Last Assessment Summary
+                    </p>
+                    <div id="summary-grid"
+                         class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <p>Run an assessment to see summary.</p>
+                    </div>
+                </div>
+
+                <!-- Assessment Log -->
+                <div class="bg-gray-900 rounded-2xl p-5 border border-gray-700">
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-sm font-semibold text-gray-400">
+                            🗒️ Assessment Log
+                        </p>
+                        <button id="btn-export"
+                                class="text-xs text-yellow-400 hover:text-yellow-300
+                                       border border-yellow-400/30 px-2 py-1 rounded">
+                            Export CSV
+                        </button>
+                    </div>
+                    <div id="log-container"
+                         class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-xs text-gray-600">
+                            No assessments logged yet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-800 mt-12 px-6 py-4">
+        <div class="max-w-5xl mx-auto text-center text-xs text-gray-600">
+            ScaffoldRisk v1.0 — Final Year Project, Civil & Environmental Engineering,
+            Federal University of Technology Akure (FUTA) — 2026 |
+            Mamdani FIS · BS EN 12811-1 Calibrated · 63 Rules
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

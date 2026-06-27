@@ -1,0 +1,211 @@
+/* ScaffoldRisk v1.0 — Custom Styles */
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Slider Cards ────────────────────────────────────────────────────────── */
+.slider-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    transition: border-color 0.3s ease;
+}
+
+.slider-card:hover {
+    border-color: #facc15;
+}
+
+.slider-card.risk-low {
+    border-color: #16a34a;
+}
+
+.slider-card.risk-moderate {
+    border-color: #ca8a04;
+}
+
+.slider-card.risk-high {
+    border-color: #ea580c;
+}
+
+.slider-card.risk-critical {
+    border-color: #dc2626;
+}
+
+/* ── Range Sliders ───────────────────────────────────────────────────────── */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #374151;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #facc15;
+    cursor: pointer;
+    border: 2px solid #111827;
+    box-shadow: 0 0 6px rgba(250, 204, 21, 0.5);
+    transition: transform 0.1s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #facc15;
+    cursor: pointer;
+    border: 2px solid #111827;
+}
+
+/* ── Gauge ───────────────────────────────────────────────────────────────── */
+#gauge-svg {
+    filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.15));
+}
+
+#gauge-needle {
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Risk Badge Colors ───────────────────────────────────────────────────── */
+.badge-vl {
+    background-color: #14532d;
+    color: #4ade80;
+}
+
+.badge-l {
+    background-color: #166534;
+    color: #86efac;
+}
+
+.badge-m {
+    background-color: #713f12;
+    color: #fde047;
+}
+
+.badge-h {
+    background-color: #7c2d12;
+    color: #fb923c;
+}
+
+.badge-vh {
+    background-color: #7f1d1d;
+    color: #f87171;
+}
+
+/* ── Directive Panel Colors ──────────────────────────────────────────────── */
+.directive-safe {
+    border-color: #16a34a !important;
+    background-color: #052e16 !important;
+}
+
+.directive-low {
+    border-color: #4ade80 !important;
+    background-color: #052e16 !important;
+}
+
+.directive-moderate {
+    border-color: #ca8a04 !important;
+    background-color: #1c1400 !important;
+}
+
+.directive-high {
+    border-color: #ea580c !important;
+    background-color: #1a0a00 !important;
+}
+
+.directive-critical {
+    border-color: #dc2626 !important;
+    background-color: #1f0000 !important;
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { border-color: #dc2626; }
+    50%       { border-color: #ef4444; box-shadow: 0 0 20px rgba(220,38,38,0.3); }
+}
+
+/* ── Log Entries ─────────────────────────────────────────────────────────── */
+.log-entry {
+    background: #1f2937;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    border-left: 3px solid #374151;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.log-entry.log-vl  { border-left-color: #16a34a; }
+.log-entry.log-l   { border-left-color: #4ade80; }
+.log-entry.log-m   { border-left-color: #ca8a04; }
+.log-entry.log-h   { border-left-color: #ea580c; }
+.log-entry.log-vh  { border-left-color: #dc2626; }
+
+/* ── Loading Spinner ─────────────────────────────────────────────────────── */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #374151;
+    border-top-color: #facc15;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    header h1 {
+        font-size: 1.25rem;
+    }
+
+    main {
+        padding: 1rem;
+    }
+}
