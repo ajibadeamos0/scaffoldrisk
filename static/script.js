@@ -879,3 +879,34 @@ btnAssess.addEventListener('click', async () => {
             '<i class="fa-solid fa-bolt"></i> Run Risk Assessment';
     }
 });
+
+// ── Wind Map Modal ────────────────────────────────────────────────────────
+const btnWindMap      = document.getElementById('btn-wind-map');
+const windMapModal    = document.getElementById('wind-map-modal');
+const closeWindModal  = document.getElementById('close-wind-modal');
+
+btnWindMap.addEventListener('click', () => {
+    windMapModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+});
+
+closeWindModal.addEventListener('click', () => {
+    windMapModal.style.display = 'none';
+    document.body.style.overflow = '';
+});
+
+// Close on overlay click (outside the modal box)
+windMapModal.addEventListener('click', (e) => {
+    if (e.target === windMapModal) {
+        windMapModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && windMapModal.style.display === 'flex') {
+        windMapModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
