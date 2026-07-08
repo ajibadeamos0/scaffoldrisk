@@ -186,6 +186,12 @@
                     </p>
                 </div>
 
+<!-- Wind Map Reference Button -->
+                <button id="btn-wind-map" class="wind-map-btn">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    View Nigeria Wind Speed Map
+                </button>
+
                 <!-- Assess Button -->
                 <button id="btn-assess" class="assess-btn">
                     <i class="fa-solid fa-bolt"></i>
@@ -492,6 +498,41 @@
         </div>
     </footer>
 
+<!-- Wind Map Modal -->
+    <div id="wind-map-modal" class="wind-modal-overlay" style="display:none;">
+        <div class="wind-modal-box">
+            <div class="wind-modal-header">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wind text-yellow-400"></i>
+                    <span class="text-sm font-bold text-white uppercase
+                                 tracking-widest">
+                        Nigeria Wind Speed Reference Map
+                    </span>
+                </div>
+                <button id="close-wind-modal" class="wind-modal-close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="wind-modal-body">
+                <iframe
+                    id="wind-map-iframe"
+                    src="/static/scaffoldrisk_wind_map.html"
+                    class="wind-map-iframe"
+                    frameborder="0"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="wind-modal-footer">
+                <span class="text-xs text-gray-600">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    Drag to rotate · Scroll to zoom ·
+                    Toggle seasons using the buttons on the left ·
+                    Use this map to calibrate your Wind Speed slider
+                    based on your zone and season
+                </span>
+            </div>
+        </div>
+    </div>
     <script src="/static/script.js"></script>
 </body>
 </html>
