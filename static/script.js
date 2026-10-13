@@ -348,7 +348,7 @@ function updateLinguistic(inputs) {
 // ── Safety Factor update ──────────────────────────────────────────────────
 function updateSafetyFactor(score) {
     // Safety factor: inverse relationship — higher score = lower SF
-    const sf = score > 0 ? Math.max(0.1, (10 / (score + 0.5))).toFixed(2) : '—';
+    const sf = (3.0 * Math.exp(-0.18 * score)).toFixed(2);
     sfValue.textContent = sf;
 
     if (score <= 2) {
@@ -635,7 +635,7 @@ btnReport.addEventListener('click', () => {
         ['Regulatory Basis',  'BS EN 12811-1: Scaffolds — Performance Requirements and General Design'],
         ['Risk Index Score',  `${latest.score.toFixed(2)} / 10.00`],
         ['Risk Category',     `${latest.category} Risk`],
-        ['Safety Factor',     `${latest.score > 0 ? Math.max(0.1, 10 / (latest.score + 0.5)).toFixed(2) : 'N/A'}`],
+        ['Safety Factor', `${(3.0 * Math.exp(-0.18 * latest.score)).toFixed(2)}`],
     ];
 
     fisRows.forEach(([label, value], i) => {
@@ -910,3 +910,258 @@ document.addEventListener('keydown', (e) => {
         document.body.style.overflow = '';
     }
 });
+
+// ── Formula Modal System ──────────────────────────────────────────────────
+
+// Engineering constants
+const ENG = {
+    rho:   1.225,          // Air density kg/m³
+    Cd:    1.3,            // Drag coefficient (sheeted scaffold)
+    G:     1.0,            // Gust factor
+    E:     210000,         // Steel modulus N/mm²
+    I:     12.19e4,        // Second moment of area mm⁴ (12.19 cm⁴)
+    K:     0.85,           // Effective length factor
+    L_bay: 2.4,            // Standard bay span m
+    A_bp:  0.0225,         // Base plate area m² (150x150mm)
+    N_clamp: 6.7,          // Clamping force kN (at 50Nm torque)
+    mu_new:  0.45,         // Friction coeff — new steel
+    mu_rust: 0.15,         // Friction coeff — heavily corroded
+};
+
+function openFormula(varName) {
+    const modal = document.getElementById(`modal-${varName}`);
+    if (!modal) return;
+
+    // Run live calculation before showing
+    computeFormula(varName);
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // Re-render MathJax inside the modal
+    if (window.MathJax) {
+        MathJax.typesetPromise([modal]).catch(err => console.log(err));
+    }
+}
+
+function closeFormula(varName) {
+    const modal = document.getElementById(`modal-${varName}`);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Close on overlay click
+document.querySelectorAll('.formula-modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.formula-modal-overlay').forEach(m => {
+            m.style.display = 'none';
+        });
+        document.body.style.overflow = '';
+    }
+});
+
+// ── Live formula calculations ─────────────────────────────────────────────
+function computeFormula(varName) {
+    if (varName === 'wind') {
+        const v_kmh = parseFloat(sliders.wind.value);
+        const v_ms  = v_kmh / 3.6;
+        const qz    = 0.5 * ENG.rho * Math.pow(v_ms, 2) * ENG.Cd * ENG.G;
+
+        document.getElementById('v-val').textContent  =
+            `${v_ms.toFixed(2)} m/s (${v_kmh} km/h)`;
+        document.getElementById('qz-val').textContent =
+            `${qz.toFixed(1)} N/m²`;
+
+        const cls = qz < 200 ? 'calc-safe' :
+                    qz < 600 ? 'calc-warning' : 'calc-danger';
+        const status = qz < 200 ? 'LOW LATERAL PRESSURE — Safe for operations' :
+                       qz < 600 ? 'MODERATE PRESSURE — Check tie spacing' :
+                                  'HIGH PRESSURE — Reinforce wall ties immediately';
+
+        document.getElementById('calc-wind-output').innerHTML =
+            `<span class="${cls}">` +
+            `q<sub>z</sub> = ½ × ${ENG.rho} × ${v_ms.toFixed(2)}² × ` +
+            `${ENG.Cd} × ${ENG.G}<br>` +
+            `q<sub>z</sub> = <strong>${qz.toFixed(1)} N/m²</strong><br>` +
+            `Status: ${status}` +
+            `</span>`;
+    }
+
+    else if (varName === 'height') {
+        const H        = parseFloat(sliders.height.value);
+        const w        = parseFloat(sliders.load.value);
+
+        // Correct engineering model:
+        // Le = effective length per LIFT (between ledger levels)
+        // not the total height — ledgers restrain each segment
+        const lift_h   = 2.0;                         // m — standard lift height
+        const Le_m     = ENG.K * lift_h;              // m per segment
+        const Le_mm    = Le_m * 1000;                 // mm
+
+        // Critical buckling load per segment (constant regardless of total H)
+        const Pcr = (Math.PI**2 * ENG.E * ENG.I)
+                    / (Le_mm**2) / 1000;              // kN
+
+        // Slenderness ratio
+        const r   = Math.sqrt(ENG.I / 509);           // radius of gyration mm
+        const lam = Le_mm / r;
+
+        // Axial load on BOTTOM standard increases with height
+        // P = service load contribution + self weight accumulation
+        const trib_area  = 2.4 * lift_h;              // m² per lift
+        const n_lifts    = Math.max(1, H / lift_h);   // number of lifts
+        const P_service  = w * trib_area;             // kN per lift
+        const P_selfwt   = 0.4 * lift_h;              // kN per lift (scaffold weight)
+        const P_axial    = (P_service + P_selfwt)
+                           * n_lifts;                  // total on bottom standard kN
+
+        // Utilisation ratio — how close are we to buckling?
+        const util = (P_axial / Pcr) * 100;
+
+        document.getElementById('le-val').textContent  =
+            `${Le_m.toFixed(2)} m (per lift, H = ${H}m = ${n_lifts.toFixed(0)} lifts)`;
+        document.getElementById('pcr-val').textContent =
+            `${Pcr.toFixed(1)} kN (per segment)`;
+
+        const cls = util < 30 ? 'calc-safe' :
+                    util < 70 ? 'calc-warning' : 'calc-danger';
+        const status = util < 30
+            ? 'SAFE — Axial load well within buckling capacity'
+            : util < 70
+            ? 'CAUTION — Increasing axial load; verify intermediate bracing'
+            : 'CRITICAL — Axial load approaching buckling limit; engineer sign-off required';
+
+        document.getElementById('calc-height-output').innerHTML =
+            `<span class="${cls}">` +
+            `Lift height = ${lift_h}m → L<sub>e</sub> = ${ENG.K} × ${lift_h} = ` +
+            `<strong>${Le_m.toFixed(2)}m</strong> per segment<br>` +
+            `P<sub>cr</sub> = π² × ${ENG.E} × ${(ENG.I/1e4).toFixed(2)}cm⁴ / ` +
+            `${Le_m.toFixed(2)}m² = <strong>${Pcr.toFixed(1)} kN</strong><br>` +
+            `Number of lifts = ${n_lifts.toFixed(0)} → ` +
+            `P<sub>axial</sub> (bottom) = <strong>${P_axial.toFixed(1)} kN</strong><br>` +
+            `Utilisation = ${P_axial.toFixed(1)} / ${Pcr.toFixed(1)} = ` +
+            `<strong>${util.toFixed(1)}%</strong><br>` +
+            `Slenderness Ratio λ = ${lam.toFixed(1)}<br>` +
+            `Status: ${status}` +
+            `</span>`;
+    }
+
+    else if (varName === 'found') {
+        const idx    = parseFloat(sliders.found.value);
+        const w      = parseFloat(sliders.load.value);
+        const H      = parseFloat(sliders.height.value);
+
+        // Correct model:
+        // Load per standard = service load × tributary area
+        //                   + self weight × height
+        const lift_h     = 2.0;
+        const trib_area  = ENG.L_bay * lift_h;          // 2.4 × 2.0 = 4.8 m²
+        const n_lifts    = Math.max(1, H / lift_h);
+        const P_service  = w * trib_area;               // kN per lift
+        const P_selfwt   = 0.4 * lift_h;                // kN per lift
+        const P_axial    = (P_service + P_selfwt) * n_lifts;  // kN total
+
+        // Use SOLE BOARD area for pressure calculation (not base plate alone)
+        // Sole board: 225mm × 900mm = 0.2025 m²
+        const A_sole     = 0.225 * 0.900;               // m²
+        const q_actual   = P_axial / A_sole;            // kN/m²
+
+        // Allowable bearing capacity from foundation index
+        // Index 0 → 30 kN/m² (waterlogged soil)
+        // Index 10 → 300 kN/m² (engineered foundation)
+        const q_all      = 30 + (idx / 10) * 270;      // kN/m²
+
+        document.getElementById('p-axial-val').textContent =
+            `${P_axial.toFixed(1)} kN`;
+        document.getElementById('qact-val').textContent =
+            `${q_actual.toFixed(1)} kN/m²`;
+        document.getElementById('qall-val').textContent =
+            `${q_all.toFixed(0)} kN/m²`;
+
+        const ratio  = q_actual / q_all;
+        const cls    = ratio < 0.7 ? 'calc-safe' :
+                       ratio < 1.0 ? 'calc-warning' : 'calc-danger';
+        const status = ratio < 0.7
+            ? `SAFE — Bearing pressure within allowable limit (${(ratio*100).toFixed(0)}% utilisation)`
+            : ratio < 1.0
+            ? `CAUTION — Approaching bearing capacity limit (${(ratio*100).toFixed(0)}% utilisation). Add sole boards.`
+            : `FAILURE RISK — Actual pressure exceeds allowable capacity. Differential settlement likely.`;
+
+        document.getElementById('calc-found-output').innerHTML =
+            `<span class="${cls}">` +
+            `P<sub>axial</sub> = (${w.toFixed(1)} × ${trib_area}) + ` +
+            `(0.4 × ${lift_h}) × ${n_lifts.toFixed(0)} lifts = ` +
+            `<strong>${P_axial.toFixed(1)} kN</strong><br>` +
+            `A<sub>sole board</sub> = 225 × 900mm = 0.2025 m²<br>` +
+            `q<sub>actual</sub> = ${P_axial.toFixed(1)} / 0.2025 = ` +
+            `<strong>${q_actual.toFixed(1)} kN/m²</strong><br>` +
+            `q<sub>all</sub> (index ${idx}/10) = ` +
+            `<strong>${q_all.toFixed(0)} kN/m²</strong><br>` +
+            `Utilisation = <strong>${(ratio*100).toFixed(0)}%</strong><br>` +
+            `Status: ${status}` +
+            `</span>`;
+    }
+
+    else if (varName === 'load') {
+        const w    = parseFloat(sliders.load.value);
+        const L    = ENG.L_bay;
+        const Mmax = (w * L**2) / 8;
+
+        document.getElementById('w-val').textContent    =
+            `${w.toFixed(1)} kN/m²`;
+        document.getElementById('mmax-val').textContent =
+            `${Mmax.toFixed(3)} kN·m`;
+
+        const cls = Mmax < 1.0 ? 'calc-safe' :
+                    Mmax < 2.5 ? 'calc-warning' : 'calc-danger';
+        const status = Mmax < 1.0 ? 'LOW BENDING MOMENT — Platform safe' :
+                       Mmax < 2.5 ? 'MODERATE MOMENT — Monitor platform deflection' :
+                                    'HIGH MOMENT — Transom bending failure risk';
+
+        document.getElementById('calc-load-output').innerHTML =
+            `<span class="${cls}">` +
+            `M<sub>max</sub> = (${w.toFixed(1)} × ${L}²) / 8<br>` +
+            `M<sub>max</sub> = <strong>${Mmax.toFixed(3)} kN·m</strong><br>` +
+            `Status: ${status}` +
+            `</span>`;
+    }
+
+    else if (varName === 'assemb') {
+        const idx = parseFloat(sliders.assemb.value);
+        // Interpolate friction coefficient from integrity index
+        const mu  = ENG.mu_rust +
+                    (idx / 10) * (ENG.mu_new - ENG.mu_rust);
+        const Fs  = mu * ENG.N_clamp;
+
+        document.getElementById('mu-val').textContent =
+            `${mu.toFixed(3)} (index ${idx}/10)`;
+        document.getElementById('fs-val').textContent =
+            `${Fs.toFixed(2)} kN`;
+
+        const cls = Fs > 2.5 ? 'calc-safe' :
+                    Fs > 1.5 ? 'calc-warning' : 'calc-danger';
+        const status = Fs > 2.5 ? 'ADEQUATE SLIP RESISTANCE' :
+                       Fs > 1.5 ? 'REDUCED RESISTANCE — Inspect and re-torque couplers' :
+                                  'CRITICAL — Coupler slip failure imminent';
+
+        document.getElementById('calc-assemb-output').innerHTML =
+            `<span class="${cls}">` +
+            `μ (adjusted for integrity ${idx}/10) = ${mu.toFixed(3)}<br>` +
+            `F<sub>s</sub> = ${mu.toFixed(3)} × ${ENG.N_clamp} kN<br>` +
+            `F<sub>s</sub> = <strong>${Fs.toFixed(2)} kN</strong><br>` +
+            `Status: ${status}` +
+            `</span>`;
+    }
+}
